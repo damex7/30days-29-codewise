@@ -82,8 +82,8 @@ export function RunResult({ run, input }: { run: ResultRun; input: string | null
       <p className="flex items-center gap-2 rounded-md border-2 border-dashed border-strong p-3 text-sm text-ink">
         <strong>Mock answer.</strong>
         {run.status === "fallback_mock"
-          ? "The real AI provider was rate-limited, so this placeholder came from the built-in mock. It is not real analysis."
-          : "No AI provider is configured, so this placeholder came from the built-in mock. It is not real analysis."}
+          ? "The real AI provider was busy or unreachable, so this placeholder came from the built-in mock. It is not real analysis."
+          : "Codewise is running in mock mode (no real AI provider), so this placeholder came from the built-in mock. It is not real analysis."}
       </p>
     ) : null;
 

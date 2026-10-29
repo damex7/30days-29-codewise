@@ -202,7 +202,7 @@ The landing page, the workbench header and the demo banner always show it: **Goo
 
 - `AI_PROVIDER=mock`;
 - `GEMINI_API_KEY` is empty;
-- Gemini has hit rate limits repeatedly (a 60-second circuit breaker).
+- Gemini has failed twice in a row with rate-limit or network errors (a 60-second circuit breaker). Answers given while the breaker is open are saved as `fallback_mock`, like any other fallback.
 
 Every mock answer says so inside the answer as well.
 
@@ -303,7 +303,7 @@ These limits use the **Postgres rate limiter** ([lib/rate-limit.ts](lib/rate-lim
 
 1. Retry once after a short backoff.
 2. If it's still limited (or unreachable), answer from the **mock** with a clear "Mock answer (fallback)" label and status `fallback_mock`.
-3. Open a 60-second circuit breaker so the next requests skip straight to the mock instead of burning more failed calls.
+3. Open a 60-second circuit breaker so the next requests skip straight to the mock (also labelled as a fallback) instead of burning more failed calls. Network failures (a connection reset, DNS errors) take the same path as a 429.
 
 ## Usage and estimated cost
 

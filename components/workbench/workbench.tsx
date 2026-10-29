@@ -141,7 +141,7 @@ export function Workbench({ providerLabel, providerIsMock }: { providerLabel: st
       if (controller.signal.aborted) {
         // Stop pressed: the server saves what it had as "interrupted".
         setPhase("done");
-        setNotice("Stopped. The partial answer below has been saved to your history as “Stopped early”.");
+        setNotice("Stopped. Whatever arrived before you pressed Stop is kept in your history.");
         setAnnounce("Generation stopped.");
         requestId.current = null;
       } else {

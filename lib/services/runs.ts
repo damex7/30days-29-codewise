@@ -191,9 +191,10 @@ export async function executeRun(actor: Actor, started: Extract<StartResult, { t
   const prompt: BuiltPrompt = buildPrompt(req);
   const lineCount = req.input.split("\n").length;
 
-  let { provider, model } = getProvider();
+  const picked = getProvider();
+  let { provider, model } = picked;
   let usage = ZERO;
-  let fellBack = false;
+  let fellBack = picked.fallback;
   let partial = "";
   const onText = streams
     ? (t: string) => {
@@ -250,7 +251,7 @@ export async function executeRun(actor: Actor, started: Extract<StartResult, { t
         throw error;
       }
       recordProviderFailure();
-      switchToMock("The AI provider is rate-limited right now, so this answer comes from the built-in mock.");
+      switchToMock("The AI provider is busy or unreachable right now, so this answer comes from the built-in mock.");
       return callOnce(provider, requestFor(messages), onText);
     }
   }

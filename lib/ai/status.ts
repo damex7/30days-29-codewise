@@ -22,7 +22,7 @@ export function providerStatus(): ProviderStatus {
     return { active: "mock", reason: "no_key", model: "mock-v1", label: "Mock provider (no GEMINI_API_KEY set)" };
   }
   if (breakerOpen()) {
-    return { active: "mock", reason: "cooling_down", model: "mock-v1", label: "Mock provider (Gemini is rate-limited; retrying soon)" };
+    return { active: "mock", reason: "cooling_down", model: "mock-v1", label: "Mock provider (Gemini is busy or unreachable; retrying soon)" };
   }
   return { active: "gemini", reason: "configured", model: e.AI_MODEL, label: `Google Gemini (${e.AI_MODEL})` };
 }
