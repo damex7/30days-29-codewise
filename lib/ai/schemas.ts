@@ -64,7 +64,13 @@ export const codeOutputSchema = z.object({
 });
 export type CodeOutput = z.infer<typeof codeOutputSchema>;
 
-export const secretFindingSchema = z.object({ line: line, kind: z.string().max(40), label: z.string().max(80) });
+export const secretFindingSchema = z.object({
+  line: line,
+  kind: z.string().max(40),
+  label: z.string().max(80),
+  /** Which box the secret was in: the code, or the error/description box. */
+  where: z.enum(["code", "details"]).optional(),
+});
 
 /**
  * What a run stores in runs.output. Structured results carry their mode as
@@ -74,8 +80,10 @@ export const secretFindingSchema = z.object({ line: line, kind: z.string().max(4
 export const storedOutputSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("explain"), data: explainOutputSchema }),
   z.object({ type: z.literal("generate"), data: codeOutputSchema }),
-  z.object({ type: z.literal("review"), data: reviewOutputSchema }),
-  z.object({ type: z.literal("fix"), data: fixOutputSchema }),
+  // dropped: findings removed because they cited lines outside the code.
+  // repaired: the first reply failed validation and the repair retry worked.
+  z.object({ type: z.literal("review"), data: reviewOutputSchema, dropped: z.number().int().min(0).optional(), repaired: z.boolean().optional() }),
+  z.object({ type: z.literal("fix"), data: fixOutputSchema, repaired: z.boolean().optional() }),
   z.object({ type: z.literal("tests"), data: codeOutputSchema }),
   z.object({ type: z.literal("convert"), data: codeOutputSchema }),
   z.object({ type: z.literal("blocked"), findings: z.array(secretFindingSchema) }),
