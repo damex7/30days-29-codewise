@@ -3,7 +3,7 @@ import type { Actor } from "@/lib/auth/current-user";
 import { randomToken, sha256 } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import { findSnippet } from "@/lib/repos/snippets";
-import { replaceShare, revokeShares, findLiveShare, findSharedSnippet } from "@/lib/repos/shares";
+import { replaceShare, revokeShares, findLiveShare, findSharedSnippet, shareIsLive } from "@/lib/repos/shares";
 import { recordAudit } from "@/lib/repos/audit";
 import { ForbiddenError, NotFoundError } from "@/lib/services/errors";
 
@@ -55,10 +55,17 @@ export interface PublicSnippet {
   updatedAt: string;
 }
 
+const TOKEN_SHAPE = /^[A-Za-z0-9_-]{20,100}$/;
+
 /** Public, no actor. Returns only the snippet content; unknown, revoked or expired -> not found. */
 export async function getSharedSnippet(token: string): Promise<PublicSnippet> {
-  if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw new NotFoundError();
+  if (!TOKEN_SHAPE.test(token)) throw new NotFoundError();
   const row = await findSharedSnippet(sha256(token));
   if (!row) throw new NotFoundError();
   return { title: row.title, language: row.language, code: row.code, tags: row.tags, updatedAt: new Date(row.updated_at).toISOString() };
+}
+
+/** Cheap yes/no for proxy.ts, so a dead link gets an HTTP 404 before the page streams. */
+export async function shareLinkIsLive(token: string): Promise<boolean> {
+  return TOKEN_SHAPE.test(token) && shareIsLive(sha256(token));
 }

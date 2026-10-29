@@ -57,14 +57,20 @@ export interface PublicSnippetRow {
  * no email, no ids, nothing about the owner's other data. A revoked or
  * expired link simply matches nothing.
  */
-export async function findSharedSnippet(tokenHash: string): Promise<PublicSnippetRow | null> {
-  const rows = await db.query<PublicSnippetRow>(
-    `SELECT s.title, s.language, s.code, s.tags, s.updated_at
-     FROM shares sh
+// What makes a link live, shared by both lookups below: not revoked, not
+// expired, and the owner's account not disabled (a disabled owner's links go dark).
+const LIVE_SHARE = `FROM shares sh
      JOIN snippets s ON s.id = sh.snippet_id AND s.user_id = sh.user_id
-     JOIN users u ON u.id = sh.user_id AND u.disabled_at IS NULL -- a disabled owner's links go dark
-     WHERE sh.token_hash = $1 AND sh.revoked_at IS NULL AND (sh.expires_at IS NULL OR sh.expires_at > now())`,
-    [tokenHash],
-  );
+     JOIN users u ON u.id = sh.user_id AND u.disabled_at IS NULL
+     WHERE sh.token_hash = $1 AND sh.revoked_at IS NULL AND (sh.expires_at IS NULL OR sh.expires_at > now())`;
+
+export async function findSharedSnippet(tokenHash: string): Promise<PublicSnippetRow | null> {
+  const rows = await db.query<PublicSnippetRow>(`SELECT s.title, s.language, s.code, s.tags, s.updated_at ${LIVE_SHARE}`, [tokenHash]);
   return rows[0] ?? null;
+}
+
+/** Index lookup only (no code fetched): lets proxy.ts answer a real 404. */
+export async function shareIsLive(tokenHash: string): Promise<boolean> {
+  const rows = await db.query<{ live: boolean }>(`SELECT EXISTS (SELECT 1 ${LIVE_SHARE}) AS live`, [tokenHash]);
+  return rows[0]?.live === true;
 }

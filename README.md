@@ -345,6 +345,8 @@ Services, routes and UI don't change. Codewise uses Gemini's stateless `generate
 
 **Why hash tokens.** Sessions and share links store only the SHA-256 of a 256-bit random token. If the table leaks (a backup, a log, a bug elsewhere), the hashes can't be turned back into working cookies or links. A fast hash is enough because the tokens are random, not human-chosen passwords. That's also why a share link is shown **once**: Codewise doesn't have it any more.
 
+**A real 404 for dead share links.** Pages stream, and once streaming starts the HTTP status is fixed at 200. So `notFound()` inside the page would show the right "Nothing here" screen but still answer 200. [proxy.ts](proxy.ts) runs one indexed `EXISTS` query for `/s/<token>` before rendering and returns a 404 for unknown, revoked or expired links. The page checks again, so a link revoked between the two checks still shows nothing.
+
 ## Privacy choices
 
 - **Admins see usage, not code.** The admin queries ([lib/repos/admin.ts](lib/repos/admin.ts)) never select `input_text`, `output` or snippet `code`. An admin can see that a user ran 12 reviews costing $0.0004, not what they pasted. People paste work they're unsure about, and that trust matters more than admin convenience. An admin sees a snippet only through a share link its owner created, like anyone else.
