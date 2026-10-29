@@ -104,38 +104,44 @@
   --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
-html {
-  background: var(--page);
-}
+/* Base element styles live in @layer base so Tailwind utilities (which are
+   in @layer utilities) can override them. Unlayered CSS beats every layer,
+   so an unlayered `a { color }` would win over `text-on-brand` on a link
+   styled as a button and hide its text. */
+@layer base {
+  html {
+    background: var(--page);
+  }
 
-body {
-  background: var(--page);
-  color: var(--ink);
-  font-family: var(--font-sans);
-}
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
 
-h1, h2, h3 {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-}
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
 
-a {
-  color: var(--brand);
-}
+  a {
+    color: var(--brand);
+  }
 
-/* One visible focus style everywhere: a 3px purple ring with an offset. */
-:focus-visible {
-  outline: 3px solid var(--brand);
-  outline-offset: 2px;
-}
-.code-panel :focus-visible,
-.code-panel:focus-visible {
-  outline-color: #b79cff; /* light purple stays visible against black */
-}
+  /* One visible focus style everywhere: a 3px purple ring with an offset. */
+  :focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+  }
+  .code-panel :focus-visible,
+  .code-panel:focus-visible {
+    outline-color: #b79cff; /* light purple stays visible against black */
+  }
 
-::selection {
-  background: var(--brand-soft);
-  color: var(--ink);
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--ink);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
