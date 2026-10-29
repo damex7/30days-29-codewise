@@ -247,6 +247,8 @@ await check("a simulated provider rate-limit error falls back to the mock and lo
 // 9. Ownership.
 let adaRunId = "";
 let adaSnippetId = "";
+// The checks above used up Ada's per-minute allowance; start a fresh window.
+await db.query("DELETE FROM rate_limits WHERE key = $1", [`run:min:${ada.id}`]);
 await check("another user's run by ID returns not found", async () => {
   const r = await run(ada, req({ mode: "explain", input: "let a = 1;" }));
   adaRunId = r.id;
@@ -343,6 +345,10 @@ await check("logs contain no raw code, emails or secrets", () => {
 void blockedRunId;
 
 // ------------------------------------------------------------- cleanup ---
+await db.query(
+  "DELETE FROM rate_limits WHERE split_part(key, ':', 3) IN (SELECT id::text FROM users WHERE email LIKE $1)",
+  [`check-%-${tag}@codewise.test`],
+);
 await db.query("DELETE FROM users WHERE email LIKE $1", [`check-%-${tag}@codewise.test`]);
 await db.query("DELETE FROM rate_limits WHERE key LIKE 'run:%' AND window_start < now() - interval '2 days'");
 await closeDb();
