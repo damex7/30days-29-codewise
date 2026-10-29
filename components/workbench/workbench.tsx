@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { LANGUAGES, LEVELS, MODES, MODE_INFO, TEST_FRAMEWORKS, LIMITS, type Language, type Level, type Mode } from "@/lib/constants";
 import { runRequestSchema } from "@/lib/validation/runs";
 import { maskSecrets, type SecretFinding } from "@/lib/ai/secrets";
@@ -9,6 +9,7 @@ import { ErrorIcon, ErrorSummary, Field, inputClass } from "@/components/form";
 import { RunResult } from "@/components/run-result";
 import { StatusBadge, statusLabel } from "@/components/badges";
 import { fieldErrorsClient } from "@/components/workbench/errors";
+import { SaveSnippet, Feedback } from "@/components/run-actions";
 
 // The workbench: mode tabs (ARIA tabs pattern), the input form, and the
 // result panel. Submitting POSTs to /api/runs and reads the NDJSON stream.
@@ -380,10 +381,16 @@ export function Workbench({ providerLabel, providerIsMock }: { providerLabel: st
   );
 }
 
-/** Filled in by later features (save as snippet, feedback). */
-function ResultExtras({ run }: { run: RunView }): ReactNode {
-  void run;
-  return null;
+/** Save and rate: shown under every finished answer that has an output. */
+function ResultExtras({ run }: { run: RunView }) {
+  if (!run.output || run.output.type === "blocked") return null;
+  const title = `${MODE_INFO[run.mode].label}: ${new Date(run.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  return (
+    <div className="flex flex-col gap-4 border-t border-line pt-4">
+      <SaveSnippet runId={run.id} defaultTitle={title} />
+      <Feedback runId={run.id} />
+    </div>
+  );
 }
 
 function PrivacyNote() {
