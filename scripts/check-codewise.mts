@@ -9,7 +9,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { insertUser } from "@/lib/repos/users";
 import type { Actor } from "@/lib/auth/current-user";
 import { setLogSink } from "@/lib/log";
-import { startRun, executeRun, getRun } from "@/lib/services/runs";
+import { startRun, executeRun, getRun, listRuns } from "@/lib/services/runs";
 import { createSnippet, getSnippet, saveRunAsSnippet } from "@/lib/services/snippets";
 import { createShareLink, revokeShareLink, getSharedSnippet } from "@/lib/services/shares";
 import { setFeedback } from "@/lib/services/feedback";
@@ -308,6 +308,33 @@ await check("a share page exposes no owner data", async () => {
 });
 
 // 12. Diff.
+// History paging: 32 runs, ten sharing one timestamp and the rest a
+// microsecond apart (a JS Date would round those together). Walking the
+// cursor must return every run exactly once, newest first.
+await check("history keyset paging returns every run once, even with equal timestamps", async () => {
+  const pager = await makeUser("pager");
+  await db.query(
+    `INSERT INTO runs (user_id, mode, language, input_hash, input_chars, status, provider, model, prompt_version, client_request_id, created_at)
+     SELECT $1, 'generate', 'go', repeat('a', 64), 1, 'error', 'mock', 'mock-v1', 'check', gen_random_uuid(),
+            CASE WHEN n <= 10 THEN timestamptz '2026-01-01 12:00:00.000001' ELSE timestamptz '2026-01-01 12:00:00' + n * interval '1 microsecond' END
+     FROM generate_series(1, 32) AS n`,
+    [pager.id],
+  );
+  const seen: string[] = [];
+  let after: string | undefined;
+  let pages = 0;
+  do {
+    const page = await listRuns(pager, { after });
+    seen.push(...page.runs.map((r) => r.id));
+    after = page.next ?? undefined;
+    pages++;
+  } while (after && pages < 10);
+  const all = await db.query<{ id: string }>("SELECT id FROM runs WHERE user_id = $1 ORDER BY created_at DESC, id DESC", [pager.id]);
+  if (new Set(seen).size !== seen.length) return "a run appeared on two pages";
+  if (seen.length !== 32) return `saw ${seen.length} of 32 runs over ${pages} pages`;
+  return seen.join() === all.map((r) => r.id).join() ? true : "order differs from (created_at DESC, id DESC)";
+});
+
 await check("the diff function is correct on 5 cases", () => {
   const show = (a: string, b: string) => diffLines(a, b).map((o) => (o.type === "same" ? " " : o.type === "add" ? "+" : "-") + o.text).join("|");
   const cases: [string, string, string][] = [
