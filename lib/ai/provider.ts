@@ -29,6 +29,11 @@ export interface GenerateRequest {
   /** Ask for JSON matching this JSON Schema (structured-output mode). */
   jsonSchema?: Record<string, unknown> | undefined;
   signal?: AbortSignal | undefined;
+  /**
+   * What the call is for. Real providers ignore it (they only see the
+   * prompt); the mock uses it to build a deterministic, mode-shaped answer.
+   */
+  task?: { mode: string; language: string; targetLanguage?: string | undefined; input: string } | undefined;
 }
 
 export type StreamChunk = { type: "text"; text: string } | { type: "usage"; usage: Usage };
