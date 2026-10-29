@@ -60,7 +60,9 @@ export interface PublicSnippetRow {
 export async function findSharedSnippet(tokenHash: string): Promise<PublicSnippetRow | null> {
   const rows = await db.query<PublicSnippetRow>(
     `SELECT s.title, s.language, s.code, s.tags, s.updated_at
-     FROM shares sh JOIN snippets s ON s.id = sh.snippet_id AND s.user_id = sh.user_id
+     FROM shares sh
+     JOIN snippets s ON s.id = sh.snippet_id AND s.user_id = sh.user_id
+     JOIN users u ON u.id = sh.user_id AND u.disabled_at IS NULL -- a disabled owner's links go dark
      WHERE sh.token_hash = $1 AND sh.revoked_at IS NULL AND (sh.expires_at IS NULL OR sh.expires_at > now())`,
     [tokenHash],
   );
