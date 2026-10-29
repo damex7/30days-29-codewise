@@ -4,10 +4,15 @@ import { connection } from "next/server";
 import { MODES, MODE_INFO } from "@/lib/constants";
 import { providerStatus } from "@/lib/ai/status";
 import { ProviderBadge } from "@/components/provider-badge";
+import { DemoButton } from "@/components/demo-button";
+import { DemoNotice } from "@/components/demo-notice";
 
-export default function Home() {
+export default function Home({ searchParams }: PageProps<"/">) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
+      <Suspense fallback={null}>
+        <DemoNotice searchParams={searchParams} />
+      </Suspense>
       <section aria-labelledby="hero" className="max-w-3xl">
         <h1 id="hero" className="text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
           A calm workbench for reading, writing and fixing code.
@@ -20,7 +25,9 @@ export default function Home() {
           <Link href="/sign-up" className="inline-flex min-h-11 items-center rounded-md bg-brand-btn px-5 font-semibold text-on-brand no-underline">
             Create a free account
           </Link>
+          <DemoButton />
         </div>
+        <p className="mt-3 text-sm text-muted">The demo uses a temporary account (deleted after 24 hours) with a few free runs. No email needed.</p>
         <div className="mt-5">
           <Suspense fallback={<span className="inline-block h-7 w-64 skeleton" aria-hidden="true" />}>
             <ActiveProvider />
