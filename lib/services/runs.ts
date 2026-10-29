@@ -4,7 +4,8 @@ import { LIMITS, MODE_INFO, type Mode } from "@/lib/constants";
 import { sha256 } from "@/lib/crypto";
 import { log } from "@/lib/log";
 import { hitLimit, MINUTE, DAY } from "@/lib/rate-limit";
-import { insertRun, findRunByRequestId, findRunForUser, finishRun, type RunRow, type RunResult } from "@/lib/repos/runs";
+import { insertRun, findRunByRequestId, findRunForUser, finishRun, listRunsForUser, type RunRow, type RunResult } from "@/lib/repos/runs";
+import { decodeCursor, encodeCursor } from "@/lib/cursor";
 import { buildPrompt, repairMessages, PROMPT_VERSION, type BuiltPrompt } from "@/lib/ai/prompts";
 import { scanForSecrets, type SecretFinding } from "@/lib/ai/secrets";
 import { reviewJsonSchema, fixJsonSchema, type StoredOutput } from "@/lib/ai/schemas";
@@ -338,4 +339,19 @@ export async function getRun(actor: Actor, runId: string): Promise<RunView> {
   const row = await findRunForUser(actor.id, runId);
   if (!row) throw new NotFoundError();
   return toRunView(row);
+}
+
+/** /history: my runs, newest first, keyset-paged (see listRunsForUser). */
+export async function listRuns(actor: Actor, f: { mode?: string | undefined; status?: string | undefined; after?: string | undefined }) {
+  const limit = 15;
+  const before = decodeCursor(f.after);
+  const rows = await listRunsForUser(actor.id, {
+    mode: f.mode,
+    status: f.status,
+    before: before ? { createdAt: before.at, id: before.id } : undefined,
+    limit: limit + 1, // one extra row tells us whether there is a next page
+  });
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return { runs: page.map(toRunView), next: rows.length > limit && last ? encodeCursor(last.cursor_at, last.id) : null };
 }
