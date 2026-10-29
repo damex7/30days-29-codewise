@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
+/*
+  Codewise palette: deep purple, white and black (about 60 / 25 / 15).
+  - White carries the page so long code and explanations stay calm to read.
+  - Deep purple marks everything you can act on: primary buttons, links,
+    the selected tab, the focus ring.
+  - Black is for text, headings, the footer and every code panel (solid
+    black with white text in BOTH modes, so code always looks the same).
+  No red or green anywhere: severity and status are told apart by a text
+  label plus a distinct shape (outline / filled / double border), never by
+  colour alone. Contrast for each pair is checked by npm run check:contrast.
+
+  Tokens are plain CSS variables that switch per theme, then exposed to
+  Tailwind through @theme inline, so classes like bg-card or text-muted
+  follow light/dark automatically.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --page: #ffffff;
+  --card: #f7f5fb;
+  --ink: #111114;
+  --muted: #4b4757;
+  --brand: #3d1e78;        /* links, selected tab, focus ring */
+  --brand-btn: #3d1e78;    /* primary button background */
+  --on-brand: #ffffff;
+  --brand-soft: #ece6f7;   /* selected tab / chip background */
+  --border: #ddd8e8;
+  --strong-border: #111114; /* error boxes: thick black border */
+  --code-bg: #000000;
+  --code-fg: #ffffff;
+  --code-muted: #a9a3b8;   /* line numbers on black */
+  --code-border: #000000;
+  --diff-add: #2d1a5c;     /* purple tint on black + "+" marker */
+  --diff-del: #2a2830;     /* grey tint on black + "-" marker */
+  --footer-bg: #111114;
+  --footer-fg: #f4f2f8;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0e0b14;
+  --card: #17121f;
+  --ink: #f4f2f8;
+  --muted: #b9b2c9;
+  --brand: #b79cff;
+  --brand-btn: #6b3fcc;
+  --on-brand: #ffffff;
+  --brand-soft: #2a1f42;
+  --border: #2e2640;
+  --strong-border: #f4f2f8;
+  --code-bg: #000000;
+  --code-fg: #ffffff;
+  --code-muted: #a9a3b8;
+  --code-border: #2e2640;
+  --diff-add: #2d1a5c;
+  --diff-del: #2a2830;
+  --footer-bg: #000000;
+  --footer-fg: #f4f2f8;
 }
 
+/* "System" theme: follow the OS unless the user picked light explicitly. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0e0b14;
+    --card: #17121f;
+    --ink: #f4f2f8;
+    --muted: #b9b2c9;
+    --brand: #b79cff;
+    --brand-btn: #6b3fcc;
+    --on-brand: #ffffff;
+    --brand-soft: #2a1f42;
+    --border: #2e2640;
+    --strong-border: #f4f2f8;
+    --code-border: #2e2640;
+    --footer-bg: #000000;
   }
 }
 
+@theme inline {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-btn: var(--brand-btn);
+  --color-on-brand: var(--on-brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-line: var(--border);
+  --color-strong: var(--strong-border);
+  --color-code: var(--code-bg);
+  --color-code-fg: var(--code-fg);
+  --color-code-muted: var(--code-muted);
+  --color-code-line: var(--code-border);
+  --color-diff-add: var(--diff-add);
+  --color-diff-del: var(--diff-del);
+  --color-footer: var(--footer-bg);
+  --color-footer-fg: var(--footer-fg);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+html {
+  background: var(--page);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--brand);
+}
+
+/* One visible focus style everywhere: a 3px purple ring with an offset. */
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+.code-panel :focus-visible,
+.code-panel:focus-visible {
+  outline-color: #b79cff; /* light purple stays visible against black */
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% { opacity: 0.5; }
+}
+.skeleton {
+  background: var(--border);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+.stream-caret::after {
+  content: "▍";
+  margin-left: 1px;
+  animation: caret-blink 1s steps(1) infinite;
 }
