@@ -90,7 +90,7 @@ async function Dashboard() {
             Run outcomes (30 days)
           </h2>
           {d.outcomes.length ? (
-            <div className="mt-3 overflow-x-auto">
+            <div className="relative mt-3 overflow-x-auto">
               <table className="w-full">
                 <caption className="sr-only">Runs by outcome, last 30 days</caption>
                 <thead>
@@ -173,7 +173,8 @@ async function Dashboard() {
           {d.demos} demo account{d.demos === 1 ? "" : "s"} currently exist (deleted after 24 hours, not listed). Disabling signs the person out everywhere,
           turns off their share links and emails them.
         </p>
-        <div className="mt-3 overflow-x-auto">
+        {/* relative: the buttons' sr-only labels are absolutely positioned; this keeps them inside the scroll box */}
+        <div className="relative mt-3 overflow-x-auto">
           <table className="w-full min-w-[40rem]">
             <caption className="sr-only">Registered users</caption>
             <thead>
